@@ -26,7 +26,7 @@ function loadLeaflet() {
 const CATEGORIES = ["Food", "Vibe", "Service", "Price"];
 const NEIGHBORHOODS = [
   "Södermalm", "Östermalm", "Vasastan", "Kungsholmen", "Gamla Stan",
-  "Norrmalm", "Lidingö", "Djurgården", "Nacka", "Solna", "Other",
+  "Norrmalm", "Other",
 ];
 const CUISINES = [
   "Swedish", "Italian", "Japanese", "Thai", "Indian", "Mexican",
@@ -466,7 +466,6 @@ function MapView({ restaurants, filter }) {
 // ── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [restaurants, setRestaurants] = useState([]);
-  const [tab, setTab] = useState("list");
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -573,137 +572,137 @@ export default function App() {
   const wantCount = restaurants.filter((r) => !r.visited).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f4f0", fontFamily: "'DM Sans', sans-serif", color: "#1a1a1a" }}>
+    <div style={{ minHeight: "100vh", width: "100%", background: "#f7f4f0", fontFamily: "'DM Sans', sans-serif", color: "#1a1a1a", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
       {/* CSS animations */}
       <style>{`@keyframes fadeInUp { from { opacity:0; transform:translateX(-50%) translateY(8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
 
-      {/* Header */}
+      {/* Header: Logo left, Add Restaurant right */}
       <div style={{
         background: "#fff", borderBottom: "1px solid #ede9e3",
-        padding: "0 24px", position: "sticky", top: 0, zIndex: 100,
+        padding: "12px 24px", position: "sticky", top: 0, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexShrink: 0,
       }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            paddingTop: 16, paddingBottom: 12,
-          }}>
-            <div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em" }}>
-                🍽 Stockholm Eats
-              </div>
-              <div style={{ fontSize: 12, color: "#999", marginTop: 1, display: "flex", alignItems: "center", gap: 8 }}>
-                <span>{visitedCount} visited · {wantCount} on the list</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ fontSize: 48, lineHeight: 1 }}>🍽</span>
+          <div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 40, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+              Stockholm Eats
+            </div>
+            <div style={{ fontSize: 14, color: "#999", marginTop: 4, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>Discover the best restaurants in Stockholm.</span>
+              <span style={{ fontSize: 14 }}>🇸🇪</span>
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                fontSize: 11, fontWeight: 600,
+                color: syncStatus === "live" ? "#2a7a4b" : syncStatus === "error" ? "#c0392b" : "#888",
+              }}>
                 <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                  fontSize: 11, fontWeight: 600,
-                  color: syncStatus === "live" ? "#2a7a4b" : syncStatus === "error" ? "#c0392b" : "#888",
-                }}>
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%", display: "inline-block",
-                    background: syncStatus === "live" ? "#2ecc71" : syncStatus === "error" ? "#e74c3c" : "#bbb",
-                  }} />
-                  {syncStatus === "live" ? "Live" : syncStatus === "error" ? "Offline" : "Connecting…"}
-                </span>
-              </div>
+                  width: 6, height: 6, borderRadius: "50%", display: "inline-block",
+                  background: syncStatus === "live" ? "#2ecc71" : syncStatus === "error" ? "#e74c3c" : "#bbb",
+                }} />
+                {syncStatus === "live" ? "Live" : syncStatus === "error" ? "Offline" : "Connecting…"}
+              </span>
             </div>
-            <button
-              onClick={() => { setEditingR(null); setShowForm(true); }}
-              style={{
-                background: "#1a1a1a", color: "#fff", border: "none",
-                padding: "10px 20px", borderRadius: 10, fontWeight: 700,
-                fontSize: 14, cursor: "pointer", fontFamily: "inherit",
-              }}
-            >+ Add Restaurant</button>
           </div>
-          {/* Tabs */}
-          <div style={{ display: "flex", gap: 4 }}>
-            {[["list", "📋 List"], ["map", "🗺 Map"]].map(([t, l]) => (
-              <button key={t} onClick={() => setTab(t)} style={{
-                padding: "8px 18px", borderRadius: "8px 8px 0 0", border: "none",
-                background: tab === t ? "#f7f4f0" : "transparent",
-                fontWeight: tab === t ? 700 : 400, fontSize: 14, cursor: "pointer",
-                color: tab === t ? "#1a1a1a" : "#888", fontFamily: "inherit",
-                borderBottom: tab === t ? "2px solid #1a1a1a" : "2px solid transparent",
-              }}>{l}</button>
-            ))}
-          </div>
+        </div>
+        <button
+          onClick={() => { setEditingR(null); setShowForm(true); }}
+          style={{
+            background: "#1a1a1a", color: "#fff", border: "none",
+            padding: "12px 24px", borderRadius: 10, fontWeight: 700,
+            fontSize: 14, cursor: "pointer", fontFamily: "inherit",
+          }}
+        >+ Add Restaurant</button>
+      </div>
+
+      {/* Search + filters bar - full width, above map */}
+      <div style={{
+        width: "100%", padding: "16px 24px", background: "#fff", borderBottom: "1px solid #ede9e3",
+        display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", boxSizing: "border-box",
+      }}>
+        <input
+          value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder="🔍 Search restaurants, neighborhoods..."
+          style={{
+            flex: 1, minWidth: 220, padding: "10px 16px", borderRadius: 10,
+            border: "1.5px solid #e0dbd4", background: "#faf8f5", fontSize: 14,
+            fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+          }}
+        />
+        <div style={{ display: "flex", gap: 8 }}>
+          {[["all", "All"], ["visited", "✓ Visited"], ["wantToTry", "☆ Want to try"]].map(([f, l]) => (
+            <button key={f} onClick={() => setFilter(f)} style={{
+              padding: "10px 16px", borderRadius: 10, border: "1.5px solid",
+              borderColor: filter === f ? "#2a7a4b" : "#e0dbd4",
+              background: filter === f ? "#edf7f1" : "#fff",
+              color: filter === f ? "#2a7a4b" : "#666",
+              fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+            }}>{l}</button>
+          ))}
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 24px" }}>
-        {/* Filters */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-          <input
-            value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search restaurants, neighborhoods, cuisines…"
-            style={{
-              flex: 1, minWidth: 200, padding: "8px 14px", borderRadius: 10,
-              border: "1.5px solid #e0dbd4", background: "#fff", fontSize: 14,
-              fontFamily: "inherit", outline: "none",
-            }}
-          />
-          <div style={{ display: "flex", gap: 6 }}>
-            {[["all", "All"], ["visited", "🟢 Visited"], ["wantToTry", "🟠 Want to try"]].map(([f, l]) => (
-              <button key={f} onClick={() => setFilter(f)} style={{
-                padding: "8px 14px", borderRadius: 10, border: "1.5px solid",
-                borderColor: filter === f ? "#1a1a1a" : "#e0dbd4",
-                background: filter === f ? "#1a1a1a" : "#fff",
-                color: filter === f ? "#fff" : "#666",
-                fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
-              }}>{l}</button>
-            ))}
+      {/* Main content: Map center + List right - full viewport */}
+      <div style={{
+        flex: 1, display: "flex", gap: 0, minHeight: 0, width: "100%", boxSizing: "border-box",
+      }}>
+        {/* Map - center, fills available space */}
+        <div style={{
+          flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "relative",
+        }}>
+          <div style={{
+            flex: 1, minHeight: 0, borderRadius: 0, overflow: "hidden",
+            boxShadow: "none", background: "#e8e4de",
+          }}>
+            <MapView restaurants={restaurants} filter={filter} />
+          </div>
+          <div style={{ position: "absolute", bottom: 12, left: 12, display: "flex", gap: 16, background: "rgba(255,255,255,0.9)", padding: "8px 14px", borderRadius: 10, fontSize: 12, color: "#666", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#2ecc71" }} /> Visited
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#f39c12" }} /> Want to try
+            </div>
           </div>
         </div>
 
-        {/* List */}
-        {tab === "list" && (
-          loading ? (
-            <div style={{ textAlign: "center", color: "#aaa", paddingTop: 48, fontSize: 14 }}>Loading…</div>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", paddingTop: 64 }}>
-              <div style={{ fontSize: 48 }}>🍜</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, marginTop: 12 }}>
-                {restaurants.length === 0 ? "No restaurants yet!" : "Nothing matches your filter"}
+        {/* List - right panel */}
+        <div style={{
+          width: 380, flexShrink: 0, overflowY: "auto", background: "#f7f4f0",
+          padding: 16, borderLeft: "1px solid #ede9e3", boxSizing: "border-box",
+        }}>
+            {loading ? (
+              <div style={{ textAlign: "center", color: "#aaa", paddingTop: 48, fontSize: 14 }}>Loading…</div>
+            ) : filtered.length === 0 ? (
+              <div style={{ textAlign: "center", paddingTop: 64 }}>
+                <div style={{ fontSize: 48 }}>🍜</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, marginTop: 12 }}>
+                  {restaurants.length === 0 ? "No restaurants yet!" : "Nothing matches your filter"}
+                </div>
+                <div style={{ color: "#aaa", marginTop: 6, fontSize: 14 }}>
+                  {restaurants.length === 0 ? "Add your first Stockholm gem" : "Try a different search or filter"}
+                </div>
+                {restaurants.length === 0 && (
+                  <button onClick={() => { setEditingR(null); setShowForm(true); }} style={{
+                    marginTop: 20, background: "#1a1a1a", color: "#fff", border: "none",
+                    padding: "12px 24px", borderRadius: 10, fontWeight: 700,
+                    fontSize: 14, cursor: "pointer", fontFamily: "inherit",
+                  }}>+ Add your first restaurant</button>
+                )}
               </div>
-              <div style={{ color: "#aaa", marginTop: 6, fontSize: 14 }}>
-                {restaurants.length === 0 ? "Add your first Stockholm gem" : "Try a different search or filter"}
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {filtered.map((r) => (
+                  <RestaurantCard key={r.id} r={r}
+                    onEdit={(r) => { setEditingR(r); setShowForm(true); }}
+                    onDelete={deleteR} />
+                ))}
               </div>
-              {restaurants.length === 0 && (
-                <button onClick={() => { setEditingR(null); setShowForm(true); }} style={{
-                  marginTop: 20, background: "#1a1a1a", color: "#fff", border: "none",
-                  padding: "12px 24px", borderRadius: 10, fontWeight: 700,
-                  fontSize: 14, cursor: "pointer", fontFamily: "inherit",
-                }}>+ Add your first restaurant</button>
-              )}
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-              {filtered.map((r) => (
-                <RestaurantCard key={r.id} r={r}
-                  onEdit={(r) => { setEditingR(r); setShowForm(true); }}
-                  onDelete={deleteR} />
-              ))}
-            </div>
-          )
-        )}
-
-        {/* Map */}
-        {tab === "map" && (
-          <>
-            <div style={{ height: 560, borderRadius: 14, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
-              <MapView restaurants={restaurants} filter={filter} />
-            </div>
-            <div style={{ display: "flex", gap: 12, marginTop: 12, justifyContent: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#666" }}>
-                <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#2ecc71" }} /> Visited
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#666" }}>
-                <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#f39c12" }} /> Want to try
-              </div>
-            </div>
-          </>
-        )}
+            )}
+        </div>
       </div>
+    </div>
 
       {/* Add/Edit Modal */}
       {showForm && (
