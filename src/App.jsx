@@ -21,13 +21,13 @@ function loadLeaflet() {
 }
 
 const CATEGORIES = ["Food", "Vibe", "Service", "Price"];
+const RATING_CATEGORIES = ["Food", "Vibe", "Service"]; // Price excluded from rating
 const NEIGHBORHOODS = [
   "Södermalm","Östermalm","Vasastan","Kungsholmen","Gamla Stan",
-  "Norrmalm","Lidingö","Djurgården","Nacka","Solna","Other",
+  "Norrmalm","Other",
 ];
 const CUISINES = [
-  "Swedish","Italian","Japanese","Thai","Indian","Mexican",
-  "French","Middle Eastern","American","Chinese","Korean","Other",
+  "Swedish","Italian","Asian", "French","Modern Scandinavian","Other",
 ];
 
 async function fetchAll() {
@@ -145,6 +145,7 @@ function RestaurantForm({ initial, onSave, onCancel, saving }) {
     width: "100%", padding: "9px 13px", borderRadius: 10,
     border: "1.5px solid #e8e4de", fontSize: 14, outline: "none",
     fontFamily: "inherit", background: "#faf8f5", boxSizing: "border-box", marginTop: 5,
+    color: "#1a1a1a", WebkitTextFillColor: "#1a1a1a",
   };
   const lbl = { fontSize: 11, fontWeight: 700, color: "#999", letterSpacing: "0.08em", textTransform: "uppercase" };
 
@@ -190,12 +191,26 @@ function RestaurantForm({ initial, onSave, onCancel, saving }) {
         <div>
           <div style={lbl}>Ratings</div>
           <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
-            {CATEGORIES.map(cat => (
+            {["Food", "Vibe", "Service"].map(cat => (
               <div key={cat} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "#555", width: 60 }}>{cat}</span>
                 <Stars value={form.ratings[cat]} onChange={v => set("ratings", { ...form.ratings, [cat]: v })} />
               </div>
             ))}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#555", width: 60 }}>Price</span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[1, 2, 3, 4].map(n => (
+                  <button key={n} type="button" onClick={() => set("ratings", { ...form.ratings, Price: form.ratings.Price === n ? 0 : n })} style={{
+                    padding: "6px 10px", borderRadius: 8, border: "1.5px solid",
+                    borderColor: form.ratings.Price === n ? "#2a5c34" : "#e0dbd4",
+                    background: form.ratings.Price === n ? "#edf7f1" : "#faf8f5",
+                    color: form.ratings.Price === n ? "#2a5c34" : "#888",
+                    fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit",
+                  }}>{"€".repeat(n)}</button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -286,13 +301,14 @@ function MapBackground({ restaurants, filter }) {
           html: `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:${color};border:3px solid ${border};box-shadow:0 4px 14px rgba(0,0,0,0.35);transform:rotate(-45deg)"></div>`,
           iconSize: [32,32], iconAnchor: [16,32], className: "",
         });
-        const avg = r.visited ? (Object.values(r.ratings).reduce((a,b)=>a+b,0)/CATEGORIES.length).toFixed(1) : null;
+        const avg = r.visited ? (RATING_CATEGORIES.reduce((a,cat)=>a+(r.ratings?.[cat]||0),0)/RATING_CATEGORIES.length).toFixed(1) : null;
         const marker = L.marker([r.lat, r.lng], { icon }).addTo(mapInstance.current).bindPopup(`
           <div style="font-family:'Cormorant Garamond',serif;min-width:180px;padding:4px">
             ${r.photos?.[0] ? `<img src="${r.photos[0]}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;margin-bottom:10px"/>` : ""}
             <div style="font-size:17px;font-weight:700;line-height:1.2">${r.name}</div>
             <div style="font-size:12px;color:#888;margin-top:3px;font-family:sans-serif">${r.cuisine} · ${r.neighborhood}</div>
             ${avg ? `<div style="color:#e8a020;font-weight:700;margin-top:6px;font-family:sans-serif">★ ${avg}</div>` : `<div style="color:#e8a020;margin-top:6px;font-family:sans-serif">🔖 Want to try</div>`}
+            ${r.ratings?.Price ? `<div style="font-size:12px;color:#666;margin-top:4px;font-family:sans-serif">${"€".repeat(r.ratings.Price)}</div>` : ""}
             ${r.notes ? `<div style="font-size:12px;color:#666;margin-top:6px;font-style:italic;font-family:sans-serif">"${r.notes.substring(0,90)}${r.notes.length>90?"…":""}"</div>` : ""}
           </div>`
         );
@@ -306,7 +322,7 @@ function MapBackground({ restaurants, filter }) {
 
 function ListCard({ r, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
-  const avg = r.visited ? (Object.values(r.ratings).reduce((a,b)=>a+b,0)/CATEGORIES.length).toFixed(1) : null;
+  const avg = r.visited ? (RATING_CATEGORIES.reduce((a,cat)=>a+(r.ratings?.[cat]||0),0)/RATING_CATEGORIES.length).toFixed(1) : null;
   return (
     <div style={{
       background: "rgba(255,255,255,0.97)", borderRadius: 16, overflow: "hidden",
@@ -337,12 +353,18 @@ function ListCard({ r, onEdit, onDelete }) {
             </div>
             {expanded && (
               <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5 }}>
-                {CATEGORIES.map(cat => (
+                {RATING_CATEGORIES.map(cat => (
                   <div key={cat} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 12, color: "#999" }}>{cat}</span>
-                    <Stars value={r.ratings[cat]} size={12} />
+                    <Stars value={r.ratings?.[cat]} size={12} />
                   </div>
                 ))}
+                {r.ratings?.Price ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 12, color: "#999" }}>Price</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>{"€".repeat(r.ratings.Price)}</span>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -462,6 +484,8 @@ export default function App() {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
+        input, textarea, select { color: #1a1a1a !important; -webkit-text-fill-color: #1a1a1a !important; }
+        input::placeholder, textarea::placeholder { color: #999; opacity: 1; }
       `}</style>
 
       {/* Full-screen map always behind everything */}
@@ -469,11 +493,12 @@ export default function App() {
 
       {/* Floating top header */}
       <div style={{
-        position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
+        position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)",
         zIndex: 100, display: "flex", alignItems: "center", gap: 10,
         background: "rgba(28,43,30,0.93)", backdropFilter: "blur(20px)",
-        borderRadius: 100, padding: "7px 7px 7px 20px",
+        borderRadius: "0 0 100px 100px", padding: "max(7px, env(safe-area-inset-top)) 7px 7px 20px",
         boxShadow: "0 8px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07)",
+        width: "100%", maxWidth: 600, justifyContent: "center",
       }}>
         <span style={{ fontSize: 17 }}>🍽</span>
         <span style={{
@@ -493,13 +518,6 @@ export default function App() {
             }}>{l}</button>
           ))}
         </div>
-
-        {/* Live indicator */}
-        <div style={{
-          width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-          background: syncStatus === "live" ? "#4ade80" : syncStatus === "error" ? "#f87171" : "#777",
-          boxShadow: syncStatus === "live" ? "0 0 8px #4ade80" : "none",
-        }} />
 
         {/* Add button */}
         <button onClick={() => { setEditingR(null); setShowForm(true); }} style={{
